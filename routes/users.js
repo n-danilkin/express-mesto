@@ -10,7 +10,7 @@ router.get('/users', (req, res) => fs.readFile(usersPath)
     .send(JSON.parse(users)))
   .catch((error) => res
     .status(500)
-    .send(error)));
+    .send({ message: error })));
 
 router.get('/users/:id', (req, res) => {
   const { id } = req.params;
@@ -25,7 +25,7 @@ router.get('/users/:id', (req, res) => {
     })
     .catch((error) => res
       .status(500)
-      .send(error));
+      .send({ message: error }));
 });
 
 module.exports = router;
