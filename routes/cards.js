@@ -13,7 +13,7 @@ router.get('/cards', (req, res) => fs.readFile(cardsPath)
   .catch((error) => {
     res
       .status(500)
-      .send(error);
+      .send({ message: error });
   }));
 
 module.exports = router;
