@@ -1,6 +1,7 @@
 # Проект Mesto фронтенд + бэкенд
 
-Домен: http://dna-mesto-react.students.nomoreparties.co/  
+Домен: http://dnmesto.students.nomoreparties.co/  
+Api: http://api.dnmesto.students.nomoreparties.co
 Публичный IPv4: 84.201.134.116
 
 ## Директории
