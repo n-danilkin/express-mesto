@@ -1,63 +1,51 @@
 const Card = require('../models/card.js');
+const NotFoundError = require('../errors/not-found-err');
+const IncorrectData = require('../errors/incorrect-data');
 
-const getCards = (req, res) => Card.find({})
+const getCards = (req, res, next) => Card.find({})
   .then((cards) => res.status(200).send(cards))
-  .catch(() => res.status(500).send({ message: 'На сервере произошла ошибка' }));
+  .catch(next);
 
-const createCard = (req, res) => {
+const createCard = (req, res, next) => {
   const { name, link } = req.body;
   const owner = req.user._id;
   Card.create({ name, link, owner })
-    .orFail(new Error('notValidId'))
+    .catch((err) => {
+      if (err.name === 'ValidationError') {
+        throw new IncorrectData('Переданы некорректные данные');
+      }
+    })
     .then((card) => res.send({ data: card }))
-    .catch((err) => {
-      if (err.message === 'notValidId') {
-        res.status(404).send({ message: 'Нет карточки с таким id' });
-      } if (err.name === 'ValidationError') {
-        res.status(400).send({ message: 'Переданы некорректные данные' });
-      } else {
-        res.status(500).send({ message: 'На сервере произошла ошибка' });
-      }
-    });
+    .catch(next);
 };
 
-const deleteCard = (req, res) => {
-  Card.findByIdAndRemove(req.params.cardId)
-    .orFail(new Error('notValidId'))
-    .then(() => { res.send({ message: 'Карточка удалена' }); })
-    .catch((err) => {
-      if (err.message === 'notValidId') {
-        res.status(404).send({ message: 'Нет карточки с таким id' });
+const deleteCard = (req, res, next) => {
+  Card.findById(req.params.cardId)
+    .orFail(new NotFoundError('Нет карточки с таким id'))
+    .then((card) => {
+      if (card.owner == req.user._id) {
+        Card.findByIdAndRemove(req.params.cardId)
+          .then(() => { res.send({ message: 'Карточка удалена' }); })
+          .catch(next);
       } else {
-        res.status(500).send({ message: 'На сервере произошла ошибка' });
+        res.send({ message: 'Вы не можете удалить чужую карточку' });
       }
-    });
+    })
+    .catch(next);
 };
 
-const likeCard = (req, res) => {
+const likeCard = (req, res, next) => {
   Card.findByIdAndUpdate(req.params.cardId, { $addToSet: { likes: req.user._id } }, { new: true })
-    .orFail(new Error('notValidId'))
+    .orFail(new NotFoundError('Нет карточки с таким id'))
     .then(() => res.send({ message: 'лайк поставлен' }))
-    .catch((err) => {
-      if (err.message === 'notValidId') {
-        res.status(404).send({ message: 'Нет карточки с таким id' });
-      } else {
-        res.status(500).send({ message: 'На сервере произошла ошибка' });
-      }
-    });
+    .catch(next);
 };
 
-const dislikeCard = (req, res) => {
+const dislikeCard = (req, res, next) => {
   Card.findByIdAndUpdate(req.params.cardId, { $pull: { likes: req.user._id } }, { new: true })
-    .orFail(new Error('notValidId'))
+    .orFail(new NotFoundError('Нет карточки с таким id'))
     .then(() => res.send({ message: 'лайк удалён' }))
-    .catch((err) => {
-      if (err.message === 'notValidId') {
-        res.status(404).send({ message: 'Нет карточки с таким id' });
-      } else {
-        res.status(500).send({ message: 'На сервере произошла ошибка' });
-      }
-    });
+    .catch(next);
 };
 
 module.exports = {

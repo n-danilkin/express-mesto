@@ -1,38 +1,48 @@
+const bcrypt = require('bcryptjs');
 const User = require('../models/user.js');
+const NotFoundError = require('../errors/not-found-err');
+const IncorrectData = require('../errors/incorrect-data');
 
-const getUsers = (req, res) => User.find({})
-  .then((users) => res.status(200).send(users))
-  .catch(() => res.status(500).send({ message: 'На сервере произошла ошибка' }));
+const getUsers = (req, res, next) => User.find({})
+  .then((users) => {
+    res.status(200).send(users);
+  })
+  .catch(next);
 
-const getUser = (req, res) => {
+const getUser = (req, res, next) => {
   User.findById(req.params.id)
-    .orFail(new Error('notValidId'))
-    .then((user) => res.status(200).send(user))
-    .catch((err) => {
-      if (err.message === 'notValidId') {
-        res.status(404).send({ message: 'Нет пользователя с таким id' });
-      } if (err.name === 'ValidationError') {
-        res.status(400).send({ message: 'Переданы некорректные данные' });
-      } else {
-        res.status(500).send({ message: 'На сервере произошла ошибка' });
-      }
-    });
-};
-
-const createUser = (req, res) => {
-  const { name, about, avatar } = req.body;
-  User.create({ name, about, avatar })
-    .then((user) => res.send({ data: user }))
+    .orFail(new NotFoundError('Нет пользователя с таким id'))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        res.status(400).send({ message: 'Переданы некорректные данные' });
-      } else {
-        res.status(500).send({ message: 'На сервере произошла ошибка' });
+        throw new IncorrectData('Переданы некорректные данные');
       }
-    });
+    })
+    .then((user) => res.status(200).send(user))
+    .catch(next);
 };
 
-const updateUserProfile = (req, res) => {
+const createUser = (req, res, next) => {
+  const {
+    name, about, avatar, email, password,
+  } = req.body;
+  bcrypt.hash(password, 10)
+    .then((hash) => User.create({
+      name,
+      about,
+      avatar,
+      email,
+      password: hash,
+    }))
+    .catch((err) => {
+      if (err.name === 'ValidationError') {
+        throw new IncorrectData('Переданы некорректные данные');
+      }
+    })
+    .then((user) => res.send({ data: user }))
+    .catch(next);
+};
+
+const updateUserProfile = (req, res, next) => {
   const { name, about } = req.body;
   User.findByIdAndUpdate(
     req.user._id,
@@ -43,20 +53,17 @@ const updateUserProfile = (req, res) => {
       upsert: true,
     },
   )
-    .orFail(new Error('notValidId'))
-    .then(() => res.send({ message: 'Профиль обновлён' }))
+    .orFail(new NotFoundError('Нет пользователя с таким id'))
     .catch((err) => {
-      if (err.message === 'notValidId') {
-        res.status(404).send({ message: 'Нет пользователя с таким id' });
-      } if (err.name === 'ValidationError') {
-        res.status(400).send({ message: 'Переданы некорректные данные' });
-      } else {
-        res.status(500).send({ message: 'На сервере произошла ошибка' });
+      if (err.name === 'ValidationError') {
+        throw new IncorrectData('Переданы некорректные данные');
       }
-    });
+    })
+    .then(() => res.send({ message: 'Профиль обновлён' }))
+    .catch(next);
 };
 
-const updateUserAvatar = (req, res) => {
+const updateUserAvatar = (req, res, next) => {
   const { avatar } = req.body;
   User.findByIdAndUpdate(
     req.user._id,
@@ -67,16 +74,14 @@ const updateUserAvatar = (req, res) => {
       upsert: true,
     },
   )
-    .then(() => res.send({ message: 'Аватар обновлён' }))
+    .orFail(new NotFoundError('Нет пользователя с таким id'))
     .catch((err) => {
-      if (err.message === 'notValidId') {
-        res.status(404).send({ message: 'Нет пользователя с таким id' });
-      } if (err.name === 'ValidationError') {
-        res.status(400).send({ message: 'Переданы некорректные данные' });
-      } else {
-        res.status(500).send({ message: 'На сервере произошла ошибка' });
+      if (err.name === 'ValidationError') {
+        throw new IncorrectData('Переданы некорректные данные');
       }
-    });
+    })
+    .then(() => res.send({ message: 'Аватар обновлён' }))
+    .catch(next);
 };
 
 module.exports = {
