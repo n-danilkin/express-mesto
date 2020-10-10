@@ -9,7 +9,7 @@ const mongoose = require('mongoose');
 
 const bodyParser = require('body-parser');
 
-const { errors } = require('celebrate')
+const { errors } = require('celebrate');
 
 const cardsRouter = require('./routes/cards');
 
@@ -61,13 +61,13 @@ app.use('/users', auth, userRouter);
 
 app.use(errorLogger);
 
-app.get('*', (req, res) => {
+app.get('*', () => {
   throw new NotFoundError('Запрашиваемый ресурс не найден');
 });
 
 app.use(errors());
 
-app.use((err, req, res, next) => { 
+app.use((err, res) => {
   const { statusCode = 500, message } = err;
 
   res

@@ -2,6 +2,7 @@ const bcrypt = require('bcryptjs');
 const User = require('../models/user.js');
 const NotFoundError = require('../errors/not-found-err');
 const IncorrectData = require('../errors/incorrect-data');
+const ConflictError = require('../errors/conflictError');
 
 const getUsers = (req, res, next) => User.find({})
   .then((users) => {
@@ -11,11 +12,9 @@ const getUsers = (req, res, next) => User.find({})
 
 const getUser = (req, res, next) => {
   User.findById(req.params.id)
-    .orFail(new NotFoundError('Нет пользователя с таким id'))
-    .catch((err) => {
-      if (err.name === 'ValidationError') {
-        throw new IncorrectData('Переданы некорректные данные');
-      }
+    .orFail()
+    .catch(() => {
+      throw new NotFoundError('Нет пользователя с таким id');
     })
     .then((user) => res.status(200).send(user))
     .catch(next);
@@ -35,12 +34,19 @@ const createUser = (req, res, next) => {
     }))
     .catch((err) => {
       if (err.name === 'MongoError' && err.code === 11000) {
-        throw new IncorrectData('Пользователь с таким email уже зарегистрирован');
+        throw new ConflictError('Пользователь с таким email уже зарегистрирован');
       } if (err.name === 'ValidationError') {
         throw new IncorrectData('Переданы некорректные данные');
       }
     })
-    .then((user) => res.send({ data: user }))
+    .then((user) => res.send({
+      data: {
+        name: user.name,
+        about: user.about,
+        avatar,
+        email: user.email,
+      },
+    }))
     .catch(next);
 };
 

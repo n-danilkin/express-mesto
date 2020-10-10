@@ -3,6 +3,7 @@
     "airbnb-base"
   ],
   "rules": {
+    "linebreak-style": ["error", "windows"],
     "no-underscore-dangle": [
       "error",
       {
@@ -10,7 +11,6 @@
           "_id"
         ]
       }
-    ],
-    "linebreak-style": 0
+    ]
   }
 }
