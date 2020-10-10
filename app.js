@@ -61,13 +61,13 @@ app.use('/users', auth, userRouter);
 
 app.use(errorLogger);
 
-app.get('*', () => {
+app.get('*', (req, res) => {
   throw new NotFoundError('Запрашиваемый ресурс не найден');
 });
 
 app.use(errors());
 
-app.use((err, res) => {
+app.use((err, req, res, next) => {
   const { statusCode = 500, message } = err;
 
   res
