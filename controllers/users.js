@@ -34,7 +34,9 @@ const createUser = (req, res, next) => {
       password: hash,
     }))
     .catch((err) => {
-      if (err.name === 'ValidationError') {
+      if (err.name === 'MongoError' && err.code === 11000) {
+        throw new IncorrectData('Пользователь с таким email уже зарегистрирован');
+      } if (err.name === 'ValidationError') {
         throw new IncorrectData('Переданы некорректные данные');
       }
     })

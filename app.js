@@ -1,3 +1,8 @@
+// NODE_ENV=production
+// JWT_SECRET=3d28c382e2d295a6397b3f78beee19a9ce9863384edc6bdfc957a332b29bdae1
+
+require('dotenv').config();
+
 const express = require('express');
 
 const mongoose = require('mongoose');
