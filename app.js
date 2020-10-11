@@ -61,7 +61,7 @@ app.use('/users', auth, userRouter);
 
 app.use(errorLogger);
 
-app.get('*', (req, res) => {
+app.get('*', () => {
   throw new NotFoundError('Запрашиваемый ресурс не найден');
 });
 
@@ -77,4 +77,5 @@ app.use((err, req, res, next) => {
         ? 'На сервере произошла ошибка'
         : message,
     });
+  next();
 });
